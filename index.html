@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+WHY THIS HTML STRUCTURE?
+- Semantic HTML5: Proper use of header, main, section, footer tags
+- Accessibility: Labels for form inputs, ARIA attributes where needed
+- Responsive: Designed to work on all screen sizes
+- Modern: Uses flexbox/grid for layout (via CSS)
+
+STRUCTURE:
+- Header: App title and description
+- Main: Two sections - Encode and Decode
+  - Encode: Upload image + enter text -> Download encoded image
+  - Decode: Upload encoded image -> See extracted text
+- Footer: Credits and info
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StegoCrypt - Image Steganography Tool</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- 
+    WHY GOOGLE FONTS?
+    - Professional typography improves UX
+    - Inter is highly readable and modern
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1 class="title">StegoCrypt</h1>
+            <p class="subtitle">Hide secret messages inside images using steganography</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="encode">
+                    <span class="tab-icon">🔒</span>
+                    Hide Message
+                </button>
+                <button class="tab-btn" data-tab="decode">
+                    <span class="tab-icon">🔓</span>
+                    Extract Message
+                </button>
+            </div>
+
+            <!-- Encode Section -->
+            <section id="encode" class="tab-content active">
+                <div class="card">
+                    <h2>Hide Your Secret Message</h2>
+                    <p class="card-description">
+                        Upload an image (PNG or JPG) and enter the text you want to hide. 
+                        The message will be invisibly embedded in the image pixels.
+                    </p>
+                    
+                    <form id="encode-form" class="form">
+                        <!-- Image Upload Area -->
+                        <div class="upload-area" id="encode-upload-area">
+                            <input type="file" id="encode-image" name="image" accept=".png,.jpg,.jpeg" hidden>
+                            <div class="upload-content">
+                                <div class="upload-icon">📷</div>
+                                <p class="upload-text">Drag & drop an image here</p>
+                                <p class="upload-subtext">or click to browse (PNG, JPG)</p>
+                            </div>
+                            <div class="file-preview" id="encode-preview" style="display: none;">
+                                <img id="encode-preview-img" src="" alt="Preview">
+                                <p id="encode-filename"></p>
+                                <button type="button" class="remove-btn" id="encode-remove">Remove</button>
+                            </div>
+                        </div>
+
+                        <!-- Secret Text Input -->
+                        <div class="form-group">
+                            <label for="secret-text">Secret Message</label>
+                            <textarea 
+                                id="secret-text" 
+                                name="secret_text" 
+                                placeholder="Enter the message you want to hide..."
+                                rows="4"
+                                required
+                            ></textarea>
+                            <p class="char-count">
+                                <span id="char-counter">0</span> characters
+                            </p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary" id="encode-btn">
+                            <span class="btn-text">Hide Message in Image</span>
+                            <span class="btn-loading" style="display: none;">Processing...</span>
+                        </button>
+                    </form>
+
+                    <!-- Result Area -->
+                    <div id="encode-result" class="result-area" style="display: none;">
+                        <div class="result-content success">
+                            <div class="result-icon">✅</div>
+                            <h3>Message Hidden Successfully!</h3>
+                            <p id="encode-message"></p>
+                            <a id="download-link" href="#" class="btn btn-success" download>
+                                Download Encoded Image
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Error Area -->
+                    <div id="encode-error" class="result-area" style="display: none;">
+                        <div class="result-content error">
+                            <div class="result-icon">❌</div>
+                            <h3>Error</h3>
+                            <p id="encode-error-message"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How It Works -->
+                <div class="info-card">
+                    <h3>How LSB Steganography Works</h3>
+                    <div class="info-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Text to Binary</h4>
+                                <p>Your message is converted to binary (0s and 1s)</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Pixel Modification</h4>
+                                <p>The last bit of each color value (RGB) is replaced with message bits</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Invisible Change</h4>
+                                <p>The change is so small (1/256) that humans can't see the difference</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Decode Section -->
+            <section id="decode" class="tab-content">
+                <div class="card">
+                    <h2>Extract Hidden Message</h2>
+                    <p class="card-description">
+                        Upload an image that contains a hidden message. 
+                        The tool will extract and display the secret text.
+                    </p>
+                    
+                    <form id="decode-form" class="form">
+                        <!-- Image Upload Area -->
+                        <div class="upload-area" id="decode-upload-area">
+                            <input type="file" id="decode-image" name="image" accept=".png,.jpg,.jpeg" hidden>
+                            <div class="upload-content">
+                                <div class="upload-icon">🔍</div>
+                                <p class="upload-text">Drag & drop an encoded image</p>
+                                <p class="upload-subtext">or click to browse (PNG, JPG)</p>
+                            </div>
+                            <div class="file-preview" id="decode-preview" style="display: none;">
+                                <img id="decode-preview-img" src="" alt="Preview">
+                                <p id="decode-filename"></p>
+                                <button type="button" class="remove-btn" id="decode-remove">Remove</button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary" id="decode-btn">
+                            <span class="btn-text">Extract Hidden Message</span>
+                            <span class="btn-loading" style="display: none;">Processing...</span>
+                        </button>
+                    </form>
+
+                    <!-- Result Area -->
+                    <div id="decode-result" class="result-area" style="display: none;">
+                        <div class="result-content success">
+                            <div class="result-icon">🔓</div>
+                            <h3>Hidden Message Found!</h3>
+                            <div class="extracted-text-container">
+                                <label>Extracted Message:</label>
+                                <div class="extracted-text" id="extracted-text"></div>
+                                <button type="button" class="btn btn-secondary" id="copy-btn">
+                                    Copy to Clipboard
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Area -->
+                    <div id="decode-error" class="result-area" style="display: none;">
+                        <div class="result-content error">
+                            <div class="result-icon">⚠️</div>
+                            <h3>No Message Found</h3>
+                            <p id="decode-error-message"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="info-card">
+                    <h3>Tips for Extraction</h3>
+                    <ul class="tips-list">
+                        <li>Only images encoded with this tool can be decoded</li>
+                        <li>PNG format preserves the hidden data better than JPG</li>
+                        <li>Don't edit or compress the encoded image, or the message will be lost</li>
+                        <li>Share the encoded image directly without modifications</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>StegoCrypt - Secure Image Steganography</p>
+            <p class="footer-tech">Built with Flask, Pillow, NumPy | LSB Steganography</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
